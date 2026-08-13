@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saas Pro Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    margin: 0;
+    display: flex;
+    background: #f1f5f9;
+}
+
+.sidebar {
+    width: 230px;
+    background: #0f172a;
+    color: white;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.sidebar h2 {
+    margin-bottom: 20px;
+}
+
+.sidebar p {
+    margin: 10px 0;
+    opacity: 0.8;
+}
+
+.sidebar button {
+    margin-top: 20px;
+    padding: 10px;
+    width: 100px;
+    background: #6366f1;
+    border: none;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.main {
+    flex: 1;
+    padding: 20px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+    gap: 15px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+input {
+    padding: 10px;
+    margin: 5px 0;
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+button.action {
+    padding: 10px;
+    background: #6366f1;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+table {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.dark {
+    background: #020617;
+    color: white;
+}
+
+.dark .card {
+    background: #1e293b;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>Saas Pro</h2>
+    <p>Dashboard</p>
+    <p>Clients</p>
+    <p>Invoives</p>
+    <p>Expenses</p>
+    <button onclick="toggleDark()">Toggle Dark Mode</button>
+</div>
+
+<div class="main">
+
+<h1>Business Dashboard</h1>
+
+<div class="cards">
+    <div class="card">Clients: <span id="clientCount">0</span></div>
+    <div class="card">Revenue: R<span id="revenue">0</span></div>
+    <div class="card">Expenses: R<span id="expenses">0</span></div>
+    <div class="card">Profit: R<span id="profit">0</span></div>
+</div>
+
+<canvas id="chart" height="100"></canvas>
+
+<!-- CLIENTS -->
+<div class="card">
+<h2>Clients</h2>
+<input id="clientName" placeholder="Client name">
+<input id="clientEmail" placeholder="Email">
+<button class="action" onclick="addClient()">Add Client</button>
+
+<table>
+<thead><tr><th>Name</th><th>Email</th></tr></thead>
+<tbody id="clientTable"></tbody>
+</table>
+</div>
+
+<!-- INVOICES -->
+<div class="card">
+<h2>Invoices</h2>
+<input id="invoiceClient" placeholder="Client">
+<input id="invoiceAmount" placeholder="Amount">
+<button class="action" onclick="addInvoice()">Create Invoice</button>
+
+<table>
+<thead><tr><th>Client</th><th>Amount</th></tr></thead>
+<tbody id="invoiceTable"></tbody>
+</table>
+</div>
+
+<!-- EXPENSES -->
+<div class="card">
+<h2>Expenses</h2>
+<input id="expenseName" placeholder="Expense name">
+<input id="expenseAmount" placeholder="Amount">
+<button class="action" onclick="addExpense()">Add Expense</button>
+
+<table>
+<thead><tr><th>Name</th><th>Amount</th></tr></thead>
+<tbody id="expenseTable"></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+let clients = JSON.parse(localStorage.getItem("clients")) || [];
+let invoices = JSON.parse(localStorage.getItem("invoices")) || [];
+let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+
+function saveData() {
+    localStorage.setItem("clients", JSON.stringify(clients));
+    localStorage.setItem("invoices", JSON.stringify(invoices));
+    localStorage.setItem("expenses", JSON.stringify(expenses));
+}
+
+function render() {
+    document.querySelector("#clientTable").innerHTML = clients.map(c =>
+    `<tr><td>${c.name}</td><td>${c.email}</td></tr>`
+).join("");
+
+document.querySelector("invoiceTable").innerHTML = invoices.map(i =>
+    `<tr><td>${i.clients}</td><td>R${i.amount}</td></tr>`
+).join("");
+
+document.querySelector("#expense").innerHTML = expenses.map(e =>
+    `<tr><td>${e.name}</td><td>R${e.amount}</td></tr>`
+).join("");
+
+document.querySelector("clientCount").innerHTML = clients.length;
+
+updateFinance();
+}
+
+function addClient() {
+    const name = document.querySelector("#clientName").value;
+    const email = document.querySelector("#clientEmail").value;
+
+    if (!name || !email) return alert("Fill all fields").value;
+
+    clients.push({ name, email });
+    saveData();
+    render();
+}
+
+function addInvoice() {
+    const client = document.querySelector("#invoiceClient").value;
+    const amount = Number(document.querySelector("#invoiceAmount").value);
+
+    if (!client || !amount) return alert("Fill all fields");
+
+    invoives.push({ client, amount });
+    saveData();
+    render();
+}
+
+function addExpense() {
+    const name = document.querySelector("#expenseName").value;
+    const amount = Number(document.querySelector("#expenseAmount").value);
+
+    if (!name || !amount) return alert("Fill all fields");
+
+    expenes.push({ name, amount });
+    saveData();
+    render();
+}
+
+function update() {
+    const revenue = invoices.reduce((sum, i) => sum + i.amount, 0);
+    const expense = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const profit = revenue - expense;
+
+    document.querySelector("#revenue").innerText = revenue;
+    document.querySelector("#expenses").innerText = expense;
+    document.querySelector("#profit").innerText = profit;
+
+    updateChart(revenue, expense);
+}
+
+let chart;
+
+function updateChart(revenue, expense) {
+    if (chart) chart.destroy();
+
+    chart = new chart(document.querySelector("#chart"), {
+        type: "bar",
+        data: {
+            labels: ["Revenue", "Expenses"],
+            datasets: [{
+                label: "Financial Overview",
+                data: [revenue, expense]
+            }]
+        }
+    })
+}
+
+function toggleDark() {
+    document.body.classList.toggle("dark");
+}
+
+render();
+</script>
+
+</body>
+</html>
